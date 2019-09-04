@@ -1,0 +1,96 @@
+---
+title: "01-assignment_<Crutchfield>"
+author: "Russell Crutchfield"
+date: "9/3/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## 1. A sentence that says “Hello, World”
+print("Hello, World")
+
+```{r}
+## Clear environment
+rm(list=ls())
+
+## Getting the necessary libraries-- 
+library(tidyverse)
+```
+
+
+```{r load_data}
+## Load in the data we will be using for this assignment: 
+load("college.Rdata")
+```
+## 2.1 - Calculate the average earnings for individuals at the most selective colleges, then compare that with individuals at the least selective colleges in the dataset.
+
+```{r combining commands}
+## 2.1 - 
+## Calculate the average earnings for very selective schools - top 1%.
+sc%>%filter(adm_rate<.1)%>%summarize(mean_earnings=mean(md_earn_wne_p6,na.rm=TRUE))
+
+## And for not very selective schools - greater than top 3%
+sc%>%filter(adm_rate>.3)%>%summarize(mean_earnings=mean(md_earn_wne_p6,na.rm=TRUE))
+
+
+```
+
+
+## 2.2 - Find a way to determine whether colleges with very high SAT scores tend to be larger or smaller than colleges with low SAT scores.
+
+```{r combining commands 2}
+
+## 2.1 - 
+## ## Below is the average mean size (number of undergraduate students) for schools with very high SAT scores (greater than 1250).
+sc%>%filter(sat_avg>1250)%>%summarize(mean_size=mean(ugds,na.rm=TRUE))
+
+## Below is the average mean size (number of undergraduate students) for schools with low SAT scores (less than 1000).
+sc%>%filter(sat_avg<1000)%>%summarize(mean_size=mean(ugds,na.rm=TRUE))
+
+```
+
+
+## 2.3 - Plot the relationship between cost and debt. What do you see? Does this surprise you?
+## The scatterplot below reveals a positive relationship between cost and debt. As cost rises, debt rises. This does not surprise me. But there is also a lot of debt for $15k - $35k schools which indicates to me these could be forst generation or lower income students accumulating debt.
+
+```{r}
+
+plot(sc$costt4_a, sc$debt_mdn,main="Scatterplot of Cost and Debt", xlab="Cost", ylab="Debt", pch=19)
+costdebt<-lm(debt_mdn ~ costt4_a, data = sc)
+abline(costdebt)
+```
+
+
+## 2.4 - Now, provide separate plots for cost and debt by control of the institution.
+## control: control of institution, 1=public, 2= private non-profit, 3=private for-profit
+## The first scatterplot depicts college costs by control of institution.
+## The second scatterplot depicts college debt by control of institution.
+
+```{r}
+plot(sc$control, sc$costt4_a,main="Scatterplot of Cost and Control", xlab="Control", ylab="Cost", pch=19)
+costcontrol <- lm(costt4_a ~ control, data = sc)
+abline(costcontrol)
+
+
+```
+
+```{r}
+plot(sc$control, sc$debt_mdn,main="Scatterplot of Debt and Control", xlab="Control", ylab="Debt", pch=19)
+debtcontrol<-lm(debt_mdn ~ control, data = sc)
+abline(debtcontrol)
+
+```
+
+
+
+
+
+
+
+
+
+
