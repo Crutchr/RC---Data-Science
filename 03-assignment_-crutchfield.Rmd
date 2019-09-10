@@ -1,0 +1,152 @@
+---
+title: "03-assignment_-crutchfield"
+author: "Russell Crutchfield"
+date: "9/8/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Assignment 3
+
+## Setup for plotting conditional means
+
+We start with a standard set of setup commands. Today we'll be working with `tidyverse`, as usual, along with a library called `forcats` which helps us to deal with the dreaded factor variables. To handle colors, we'll need the package `RColorBrewer.`
+
+```{r  include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(forcats)
+library(RColorBrewer)
+library(knitr)
+
+```
+
+Next we load in the data.
+
+## Loading Data - load: attrition.Rdata
+```{r}
+
+load("~/Desktop/Fall 2019/Data Science/scripts/attrition.Rdata")
+
+```
+
+## 1. Create a graph that shows the distribution of monthly income.
+## create a new ggplot using the attrition data set. Monthly Income will go into the aesthetic is. ## We are creating a histogram. fill will be light blue. The x-axis will be Monthly Income and the ## y-axis represents the individuals count. Binwidth (). 
+##This is a right-skewed distrobution.
+
+```{r}
+gg<-ggplot(at,aes(x=MonthlyIncome))
+gg<-gg+geom_histogram(binwidth = 100,fill="lightblue")
+gg
+
+```
+
+
+## 2. Create a graph that shows the average level of monthly income by field of education.
+
+```{r}
+
+at_sum<-at%>%
+  group_by(EducationField)%>%
+  summarize(Monthly_Income_Avg=mean(MonthlyIncome))
+
+
+at_sum
+
+
+```
+
+
+```{r}
+## Bar Plot with aesthetics: mean attrition as height, business travel as cateogry
+gg<-ggplot(at_sum,aes(x=EducationField,y=Monthly_Income_Avg))
+## Use bar plot geometry, height of bars set by level observed in dataset
+gg<-gg+geom_bar(stat="Identity", fill="light blue", color="black")
+## Print
+gg
+
+## Same asethetics, but now orderred by level - by Average monthly income, and clean up labels:
+gg<-ggplot(at_sum,aes(x=fct_reorder(EducationField,Monthly_Income_Avg),y=Monthly_Income_Avg))
+
+gg<-gg+geom_bar(stat="identity", fill="light blue", color="black")
+
+## Labeling
+gg<-gg+xlab("Field of Education")+ylab("Average Monthly Income")
+##Print
+gg
+
+```
+
+
+
+## 3. Create another graph that shows average level of monthly income by field of education and gender.
+
+```{r}
+## Summarize level of monthly income by education AND gender
+at_sum<-at%>%
+  group_by(EducationField,Gender)%>%
+  summarize(Monthly_Income_Avg=mean(MonthlyIncome))
+
+## Get the results
+at_sum
+
+
+```
+
+```{r}
+## PLot it using a bar plot
+gg<-ggplot(at_sum,aes(x=fct_reorder(EducationField,Monthly_Income_Avg),y=Monthly_Income_Avg,color=Gender))
+gg<-gg+geom_bar(stat="identity",aes(fill=Gender),position="dodge")
+gg<-gg+ylab("Pr(Average Monthly Income)")+xlab("Field of Education")
+gg
+
+
+```
+
+
+
+## 4. Create a graph that shows average levels of monthly income by field of education, gender and job level (scale of 1-5, highest ranked employees are 5)
+
+## ## More Variables: faceting
+
+## We can continue this logic with three variables. Now we're going to summarize and arrange positions by field of education, gender and job level and then split the graphic by job level.
+```{r}
+
+at_sum<-at%>%
+  group_by(EducationField,Gender,JobLevel)%>%
+  summarize(Monthly_Income_Avg=mean(MonthlyIncome))%>%
+  arrange(-Monthly_Income_Avg)
+
+at_sum
+
+
+```
+
+```{r}
+
+gg<-ggplot(at_sum,aes(x=reorder(EducationField,Monthly_Income_Avg),
+                      y=Monthly_Income_Avg,
+                      fill=Gender))
+## Bar plot, with unstacked (dodge)
+ gg<-gg+geom_bar(stat="identity",position="dodge")
+## Separate out by Job Level
+gg<-gg+facet_wrap(~JobLevel)
+## Change orientation to sideways
+gg<-gg+coord_flip()
+## Print
+gg
+
+```
+
+
+
+
+
+
+
+
+
+
