@@ -1,0 +1,132 @@
+---
+title: "04-assignment_<crutchfield>.Rmd"
+author: "Russell Crutchfield"
+date: "9/12/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Assignment 4
+
+```{r}
+
+#library(gdata)  #gdata is finicky ... you may need to install it, but not load it.
+library(gdata)
+library(tidyverse)
+library(haven)
+library(readxl)
+
+```
+
+
+
+## 1.	Panel data for OECD countries. Save as file name oecd.RData http:
+//www.wiley.com/legacy/wileychi/baltagi/supp/Gasoline.dat
+
+```{r}
+
+oecd<-read_table(file="http://www.wiley.com/legacy/wileychi/baltagi/supp/Gasoline.dat")
+
+## Renaming columns:
+names(oecd) <- c("Country", "Year", "LGASPCAR", "LINCOMEP", "LRPMG", "LCARPCAP")
+
+head(oecd)
+
+## Save the file: 
+##save(oecd,file="oecd.Rdata")
+
+```
+
+
+
+## 2.	U.S. National Election Survey data from 2004. Save as file name nes.RData. http://www.uta.edu/faculty/story/DataSets.htm
+
+```{r}
+
+nes<-read_spss("http://www.uta.edu/faculty/story/DataSets/NES2004.sav")
+
+## Removing unwanted columns:
+nes <- nes[,-c(3,20,21)]
+
+head(nes)
+
+## Save the file:
+##save(nes,file="nes.Rdata")
+
+```
+
+
+
+## 3.	General social survey, student version. Save as file name gss.Rdata. http://www.uta.edu/faculty/story/DataSets.htm
+
+```{r}
+
+gss<-read_excel("GeneralSocialSurvey1996ExcelDataStudentVersion.xls",skip=0,col_names = TRUE)
+
+
+##Removing unwanted columns:
+gss <- gss[,-c(10,11)]
+
+head(gss)
+
+## Save the file:
+##save(gss,file="gss.Rdata")
+
+```
+
+
+
+4.	Replication file for “STATISTICAL DISCRIMINATION OR PREJUDICE? A LARGE SAMPLE FIELD EXPERIMENT”. Open up and save the mainData.csv file. Save it as maindata.RData. Available here, look under the “Data and Analysis” tab.
+
+```{r}
+
+maindata<-read_csv(file = "https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/26410/05NHUX")
+
+##head(csv)
+
+## Save the file:
+##save(maindata,file="maindata.Rdata")
+```
+
+
+
+5. The Lalonde dataset, covering work experiences in the Panel Study of Income Dynamics (psid). Save as psid.RData http://users.nber.org/
+~rdehejia/data/psid_controls.txt You’ll find a description of the data
+that you’ll need here.
+
+```{r}
+
+psid<-read.table(file="http://users.nber.org/~rdehejia/data/psid_controls.txt")
+
+head(psid)
+
+## rename column names:
+names(psid)<-c("treatment",
+                "ags",
+                "education",
+                "Black",
+                "Hispanic",
+                "married",
+                "nondegree",
+                "RE74",
+                "RE75",
+                "RE78")
+ 
+
+head(psid)
+
+## Save the file:
+##save(psid,file="psid.Rdata")
+
+```
+
+
+
+
+
+
+
+
