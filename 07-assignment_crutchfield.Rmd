@@ -1,0 +1,122 @@
+---
+title: "07_assignment_crutchfield"
+author: "Russell Crutchfield"
+date: "9/23/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Assignment 7 (Week 5) - Option 2
+
+
+```{r scorecard} 
+## Clear environment
+rm(list=ls())
+
+library(tidyverse)
+```
+
+```{r}
+### Install the needed packages...
+# install.packages("twitteR")
+#install.packages("ROAuth")
+# install.packages("rtweet")
+library(arules)
+library(rtweet)
+library(twitteR)
+library(ROAuth)
+library(jsonlite)
+library(rjson)
+library(tokenizers)
+library(tidyverse)
+library(tm)
+library(wordcloud)
+```
+
+
+## OPTION 2:
+
+## 1. Create a twittR Account. What is your consumerKey? What is your accessToken?
+## Apply for a developer account at https://developer.twitter.com/en/apply-for-access . 
+## Follow instructions and take note of your API keys and tokens which grant you access.
+```{r}
+
+consumerKey='SOxmmtuy4rrTDn5AgGfrEbJCI'
+consumerSecret='HKxh1JWHy5lwOYat9nGuP1t9oxUjGBwq6rjFI3yWsYl2czPoRV'
+access_Token='714478256418897920-QdraWHbUbkiAkp9sm9ixDpvmSdaAX97'
+access_Secret='rLnyySDq4Ak5qNPsjRjURqZDA1YZ1aRD4hN3xhvwgdinL'
+
+requestURL='https://api.twitter.com/oauth/request_token'
+accessURL='https://api.twitter.com/oauth/access_token'
+authURL='https://api.twitter.com/oauth/authorize'
+
+
+#filename="TwitterConKey_ConSec_AccTok_AccSec.txt"
+#(tokens<-read.csv(filename, header=TRUE, sep=","))
+#(consumerKey=as.character(tokens$consumerKey))
+#consumerSecret=as.character(tokens$consumerSecret)
+#access_Token=as.character(tokens$access_Token)
+#access_Secret=as.character(tokens$access_Secret)
+```
+## 2. Run example 07-twitterAPI.rmd. Use hashtag: Trump. What are the 5 most common words contained within collected tweets?
+## Run the following line of code and change the hashtag, n, and date, to what you desire.
+## Search<-twitteR::searchTwitter("#Trump",n=10,since="2019-09-18")
+
+```{r}
+setup_twitter_oauth(consumerKey,consumerSecret,access_Token,access_Secret)
+
+# Below is the function that scours twitter for a particular hash tag.
+# n is the number of tweets to be collected
+
+Search<-twitteR::searchTwitter("#Trump",n=42,since="2019-09-09")
+(Search_DF <- twListToDF(Search))
+
+# If you wish to store the tweets in a csv file ... 
+TransactionTweetsFile = "tweets.csv"
+(Search_DF$text[1])
+
+
+## Start the file
+Trans <- file(TransactionTweetsFile)
+
+## Tokenize tweets into a list of words 
+Tokens<-tokenizers::tokenize_words(Search_DF$text[1],stopwords = stopwords::stopwords("en"), 
+          lowercase = TRUE,  strip_punct = TRUE, strip_numeric = TRUE,simplify = TRUE)
+
+## Write squished tokens
+cat(unlist(str_squish(Tokens)), "\n", file=Trans, sep=",")
+close(Trans)
+
+## Add remaining lists of tokens into file
+## NOTE - a list of tokens is the set of words from a Tweet
+
+Trans <- file(TransactionTweetsFile, open = "a")
+tokenList = Tokens
+for(i in 2:nrow(Search_DF)){
+  Tokens<-tokenize_words(Search_DF$text[i],stopwords = stopwords::stopwords("en"), 
+            lowercase = TRUE,  strip_punct = TRUE, simplify = TRUE)
+  cat(unlist(str_squish(Tokens)), "\n", file=Trans, sep=",")
+  tokenList <- c(tokenList,  unlist(str_squish(Tokens)))
+}
+close(Trans)
+```
+
+## 3. Run this RMD file and choose your favorite hashtag, e.g. chocolate.Create a wordcloud using words from all collected tweets.
+
+```{r Wordcloud}
+## Create a wordcloud, but first transform list of words into a TermDocumentMatrix
+
+cor <- Corpus(VectorSource(tokenList))
+
+tdm <- TermDocumentMatrix(cor)
+m <- as.matrix(tdm)
+v <- sort(rowSums(m),decreasing=TRUE)
+d <- data.frame(word = names(v),freq=v)
+
+## NOTE:  d contains the words d$word AND frequencies d$freq
+
+wordcloud(d$word,d$freq, colors=c("red","green","blue","orange","black","purple", "seagreen") , random.color = TRUE, min.freq = 2)
+
+```
