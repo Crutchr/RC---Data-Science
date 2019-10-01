@@ -1,0 +1,136 @@
+---
+title: "11_assignment_crutchfield"
+author: "Russell Crutchfield"
+date: "9/25/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+#Get libraries
+library(tidyverse)
+library(nycflights13)
+library(RSQLite)
+
+```
+
+## Assignment 11 Complete the following steps:
+
+## 1. Using the nyclfights13 library, open all of the data tables and turn them into a database. Make sure to include flights, airlines, airports, weather and planes.
+# HINT: Simple – just run the r-chunk from the example, lines 35 – 60.
+
+```{r}
+
+# Data sources from NYC flights
+data(flights)
+data(airlines)
+data(airports)
+data(weather)
+data(planes)
+
+```
+
+```{r}
+con <- dbConnect(RSQLite::SQLite(), ":memory:")
+
+#Write flights tables to database:
+dbWriteTable(con,
+             "flights", 
+             as.data.frame(flights))
+
+dbWriteTable(con,
+             "planes", 
+             as.data.frame(planes))
+
+dbWriteTable(con,
+             "airlines", 
+             as.data.frame(airlines))
+
+dbWriteTable(con,
+             "weather", 
+             as.data.frame(weather))
+
+dbWriteTable(con,
+             "airports", 
+             as.data.frame(airports))
+
+
+```
+
+
+## 2. Create a data frame from a SQL pull from the database that consists only of flights that took off from JFK in May.
+# HINT: You will need to send a query to the database. Selecting only flights from ‘JFK’ – don’t forget the quotes!!!
+# Try using the following request text: req_text<-"Select * from flights Where origin=='JFK' "
+# Then execute the query
+
+
+```{r}
+
+# select flights, in May, from JFK:
+req1_text<-"SELECT * from flights where month = 5 and origin = 'JFK' 
+            "
+req1<-dbSendQuery(con,req1_text)
+
+req1_df<-dbFetch(req1,n=-1)
+
+dbClearResult(req1)
+
+head(req1_df) 
+
+```
+
+
+## 3. Create a data frame from a SQL pull from the database that consists only of flights that took off on-time (a delay of less than 10 minutes) from Newark at temperatures of less than 40 degrees F.
+# HINT: This request has 3 conditions (from 2 different databases!!) that must be met, thus we will need to connect each condition with an AND ... plus ... we will need to access two databases.
+# We will include the join (of both databases) within the request ....
+# Try: req_text<-"Select f.dep_delay, f.origin, w.temp 
+# FROM flights f
+# JOIN weather w
+# WHERE f.origin=w.origin AND f.year=w.year AND f.month=w.month AND f.day=w.day AND f.hour=w.hour AND f.origin= <what goes here?> AND f.dep_delay<10 AND w.temp<40"
+
+```{r}
+# EWR, Delay less than 10, and temp less than 40
+
+req2_text<-"Select f.dep_delay, f.origin, w.temp 
+FROM flights f
+JOIN weather w
+WHERE f.origin=w.origin AND f.year=w.year AND f.month=w.month AND 
+f.day=w.day AND f.hour=w.hour AND f.origin= 'EWR' AND 
+f.dep_delay<10 AND w.temp<40
+"
+req2<-dbSendQuery(con,req2_text)
+
+req2_df<-dbFetch(req2,n=-1)
+
+dbClearResult(req2)
+
+head(req2_df) 
+
+```
+
+
+## 4. Create data frame from a SQL pull from the database that consists of planes flown by United.
+# Hint: since we have already likely created a flights data frame, we can filter all flights flown by United using the “filter(...)” function.
+
+```{r}
+# Flights, United
+
+req3_text <- "SELECT * FROM flights WHERE carrier = 'UA'"
+
+req3<-dbSendQuery(con,req3_text)
+
+req3_df<-dbFetch(req3,n=-1)
+
+dbClearResult(req3)
+
+head(req3_df) 
+
+```
+
+
+
+
