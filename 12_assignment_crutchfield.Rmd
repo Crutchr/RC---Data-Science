@@ -1,0 +1,153 @@
+---
+title: "12_assignment_crutchfield"
+author: "Russell Crutchfield"
+date: "10/2/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Assignment 12
+
+##Complete the following steps:
+
+```{r}
+# Install Packages:
+
+rm(list = ls())
+library(tidyverse)
+library(stats)
+library(flexclust)
+library(ggplot2)
+library(LICORS)
+library(knitr)
+library(modelr)
+library(readxl)
+```
+
+
+## 1. Download the student evaluation dataset from the website.
+# Hint: You can find this xls file in the repo as well: ev<-read_xlsx("turkiyestudentevaluation_generic.xlsx")
+
+```{r}
+# load and view data file:
+ev<-read_xlsx("turkiyestudentevaluation_generic.xlsx")
+view(ev)
+```
+
+
+## 2. Select a set of 10 related variables that you think might serve as the basis for clustering.
+# View the dataframe and identify 10 variables you would like to use for analysis.
+# Hint: See syntax in Will’s example on how to select variables, if you forgot ... (or see examples from weeks 1 – 3.)
+
+```{r}
+## Selected questions from data dictionary: q2, q8, q9, q11, q13, q14, q16, q18, q22, q24:
+ev1 <- ev %>%
+  select("Q2", "Q8", "Q9", "Q11", "Q13", "Q14", "Q16", "Q18", "Q22", "Q24")
+
+```
+
+
+## 3. Run the clustering algorithm kmeanspp to identify 3 clusters. Hint: use kmeanspp ...
+
+```{r}
+# Select 3 clusters:
+ev_clust <- kmeanspp(ev1, k = 3, start = "random", iter.max = 1000, nstart = 1)
+table(ev_clust$cluster)
+
+```
+
+
+## 4. Summarize the clusters using the variables you selected.
+# Analyze your findings ... this will be subjective and up to interpretation. Do you notice any patterns relevant in your clusters??
+
+```{r}
+ev1$cluster <- ev_clust$cluster
+mycols <- c("Group 1", "Group 2", "Group 3")
+
+#proportions of variables 
+pt <- prop.table(table(ev1$cluster, ev1$Q2), margin = 1)
+
+rownames(pt) <- mycols
+pt <- pt * 100
+pt <- round(pt, 1)
+pt
+
+#Group 1 felt objectives were somewhat clear 
+#Group 2 felt they weren't clear at all 
+#Group 3 felt they were REALLY clear
+
+pt <- prop.table(table(ev1$cluster, ev1$Q8), margin = 1)
+
+rownames(pt) <- mycols
+pt <- pt * 100
+pt <- round(pt, 1)
+pt
+
+#Repeated for the other 8 variables: 
+prop.table(table(ev1$cluster, ev1$Q9), margin = 1) %>% kable()
+prop.table(table(ev1$cluster, ev1$Q11), margin = 1) %>% kable()
+prop.table(table(ev1$cluster, ev1$Q13), margin = 1) %>% kable()
+prop.table(table(ev1$cluster, ev1$Q14), margin = 1) %>% kable()
+prop.table(table(ev1$cluster, ev1$Q16), margin = 1) %>% kable()
+prop.table(table(ev1$cluster, ev1$Q18), margin = 1) %>% kable()
+prop.table(table(ev1$cluster, ev1$Q22), margin = 1) %>% kable()
+prop.table(table(ev1$cluster, ev1$Q24), margin = 1) %>% kable()
+
+#Summarize variables 
+var.means <- colMeans(ev1)
+var.means <- var.means[-(length(var.means))]
+
+sum1 <- ev1 %>% group_by(cluster) %>% summarize_all(funs(mean), na.rm = TRUE)
+sum1
+
+sum2 <- gather(sum1, -cluster, key = variable, value = value)
+sum2
+sum_total <- ev1 %>% summarize_all(funs(mean))
+
+sum_total <- gather(sum_total, key = variable, value = overall_mean)
+sum2 <- left_join(sum2, sum_total, by = "variable")
+
+
+sum2 <- sum2 %>% group_by(variable) %>% mutate(varmeans = mean(value))
+
+sum2 <- sum2 %>% group_by(variable) %>% mutate(varmeans = mean(value))
+
+#Variable Names 
+variable_labels <- rev(c("Clear Objectives", "Helpful Assessments", "Enjoyed Course", "Relevant for Professional Growth", "Knowledgable Instructor", "Prepared Instructor", "Committed Instructor", "Good Public Speaker", "Open Minded Instructor", "Relevant Assignments-Helpful"))
+
+
+g1 <- ggplot(data = sum2, aes(y = value, x = variable, fill = variable))
+g1 <- g1 + geom_bar(stat = "identity") + coord_flip() + theme(legend.position = "none")
+g1 <- g1 + scale_x_discrete(labels = variable_labels)
+g1 <- g1 + geom_point(data = sum2, aes(y = overall_mean, x = variable))
+g1 <- g1 + facet_wrap(~cluster)
+g1
+
+
+ev1$cluster_name <- NA
+ev1$cluster_name[ev1$cluster == 1] <- "Exceedingly Satisfied Students"
+ev1$cluster_name[ev1$cluster == 2] <- "Exceedingly Unsatisfied Satisfied Students"
+ev1$cluster_name[ev1$cluster == 3] <- "Satisfied Students"
+```
+
+## Summary of Cluster Patterns: 
+#Cluster 1: Students were exceedingly unsatisfied with the overall Class experience.
+#Cluster 2: Students were neutral or satisfied with the overall course experience.
+#Cluster 3: Students were exceedingly satidfied with the overall class experience.
+
+
+
+## 5. Bonus Question: Try running a HAC algorithm on the data and compare to the results found in #4.
+
+```{r}
+
+
+
+```
+
+
+
+
