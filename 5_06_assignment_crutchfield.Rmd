@@ -1,0 +1,132 @@
+---
+title: "5_06_assignment_crutchfield"
+author: "Russell Crutchfield"
+date: "10/16/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Assignment for Week 9 / Modules 5 and 6 (Merged and consolidated)
+#In this assignment, you’ll be asked to predict reading scores using the ELS data.
+
+
+## Load Libraries
+```{r,echo=FALSE}
+rm(list=ls())
+library(tidyverse)
+library(forcats)
+library(ModelMetrics)
+library(modelr)
+library(ggplot2)
+```
+
+## Load Data File
+
+```{r}
+load("~/Desktop/Fall 2019/Data Science/GitHub Projects/data_science/LLO8200/els_train.RData")
+
+load("~/Desktop/Fall 2019/Data Science/GitHub Projects/data_science/LLO8200/els.RData")
+
+load("~/Desktop/Fall 2019/Data Science/GitHub Projects/data_science/LLO8200/els_test.RData")
+```
+
+
+## Scatterplots.
+
+## 1. Choose a dependent variable and plot that dependent variable as a function of a continuous independent variable.
+#Use ggplot
+
+```{r}
+gg <- ggplot(els, aes(x=byses1, y=bynels2r)) + geom_point(alpha=0.50, size=0.25)
+gg
+```
+
+
+## 2. If you need to, adjust the scale of either the dependent variable or independent variable to make more sense.
+#Yes – try this and show the results (even if it makes the plot “worse”).
+
+```{r}
+#adjust the scale
+
+gg1 <- gg + xlim(c(-1,1)) + ylim(c(20,40))
+gg1
+
+
+```
+
+
+## 3. Add a line of best fit to your graphic.
+# Show both the loess and lm lines. Hint: Use geom smooth.
+
+```{r}
+
+gg <- gg + geom_smooth(method = "lm", color = "blue")
+gg <- gg + geom_smooth(method = "loess", color = "red")
+gg
+```
+
+
+## 4. Clean up the labeling and description of the graphic so that it could be presented to a broader audience.
+#Make it pretty. Hint: Investigate the resources for ggplot and find which parameters can be altered for aesthetics.
+
+```{r}
+
+gg <- gg + xlab("socio-economic status") + ylab("reading Scores") + ggtitle ("Economic Status by Reading Score") + theme_bw()
+gg
+
+```
+
+
+## 5. In your .Rmd file, include a few sentences describing what the graphic above shows.
+# Also, clearly explain the difference between the loess and the lm estimates. Explain which would be “better” for prediction purposes and why.
+
+```{r}
+
+# As socio-economic status rises, reading scores rise.
+# Both lines (loess and lm) are almost identical so neither are better than the other.
+# Model minimizes risiduals.
+
+```
+
+
+##Regression.
+
+## 6. Create a regression that predicts reading scores as a function of SES plus one other covariate, using the training data.
+# First load the training data and proceed with “learning” a regression model. This is synonmous with learning the parameters to the linear equation, such that the linear equation will “best” model the data. Hint: use the lm(...) function; you will need to clearly identify the independent and dependent variable(s)
+# Hint: I encourage you to plot the results so that you can visually confirm the result.
+
+```{r}
+
+example1 <- lm(bynels2r~byses1 + as.factor(bypared_phd), els_train)
+
+summary (example1)
+confint(example1)
+
+# intercept only model = y = mx + b = 29.5 (avg reading scores as soc increases by 1 unit, then reading score increases by 5.7% points on average). If parent has a PhD, score decreases by -1.4937. Maybe the parent isn't present in the child's education. Both variables are significant (they are larger than .05). Both Confidence intervals are significant (Does not contain 1).
+```
+
+
+## 7. Report the RMSE from a validation of your model using the testing data.
+#First you will need to load the testing data. 
+#Then apply your learned model (from #1) to the test data. 
+#The prediction will likely not be perfect, and thus there will be some error ... that’s what we are computing here !! 
+#Hint: use the modelr::rmse(...) function. This function will apply the regression model and measure the error!
+#Hint: (As you have done previously) You may wish to store intermediate computational results of the error back into the data frame using mutate.
+#Hint: I encourage you to plot the results so that you can visually confirm the result.
+
+```{r}
+
+# Closer MSE is to 0, the better the model:
+
+rmse_1<-modelr::rmse(example1,els_test);rmse_1
+
+```
+
+
+
+
+
+
+
