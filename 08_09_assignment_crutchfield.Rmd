@@ -1,0 +1,164 @@
+---
+title: "08_09_assignment_crutchfield"
+author: "Russell Crutchfield"
+date: "10/22/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries}
+library(tidyverse)
+library(knitr)
+library(modelr)
+library(caret)
+library(forcats)
+
+```
+
+```{r}
+# Load Data Sets
+
+test <- read_csv("~/Desktop/Fall 2019/Data Science/scripts/test.csv")
+View(test)
+
+training <- read_csv("~/Desktop/Fall 2019/Data Science/scripts/training.csv")
+View(training)
+
+```
+
+
+## Assignment Module 8 + 9
+#For this assignment, you’ll be using the lemons dataset, which is a subset of the dataset used for a Kaggle competition described here: https://www.kaggle.com/c/DontGetKicked/data. Your job is to predict which cars are most likely to be lemons.
+
+#Complete the following steps.
+
+## 1. Calculate the proportion of lemons in the training dataset using the IsBadBuy variable.
+```{r}
+table(training$IsBadBuy)
+
+prop.table(table(training$IsBadBuy))
+
+```
+
+## 2. Calculate the proportion of lemons by Make.
+```{r}
+table(training$Make)
+
+prop.table(table(training$Make))
+
+
+```
+
+## 3. Now, predict the probability of being a lemon using a linear model (lm(y~x), with covariates of your choosing from the training dataset.
+```{r}
+#Using Vehivle Year and Vehicle age as covariables:
+
+lm_mod<-lm(IsBadBuy~
+             VehYear+
+             VehicleAge,
+           data=training,y=TRUE,na.exclude=TRUE);summary(lm_mod)
+
+
+
+```
+
+## 4. Make predictions from the linear model.
+```{r}
+#With these results in hand we can generate predicted probabilities and see if this model did any better. To get predicted probabilities, we need to specify `type=response` in our prediction call. 
+
+training<-training%>%
+  mutate(pred_lm=predict(lm_mod,type="response"))
+```
+
+```{r}
+#We can convert the predictions to a binary variable by setting a "threshold" of .5. Any prediction above .5 is considered to be a 1, anything below, a 0.
+
+training<-training%>%
+    mutate(pred_lm_out=ifelse(pred_lm>=.3,1,0))
+
+
+```
+
+## 5. Now, predict the probability of being a lemon using a logistic regression (glm(y~x,family=binomial(link="logit"))), again using covariates of your choosing.
+```{r}
+#Using Vehivle Year and Vehicle age as covariables:
+logit_mod<-glm(IsBadBuy~
+             VehYear+   
+             VehicleAge,
+             data=training,
+            na.action=na.exclude,
+            family=binomial(link="logit"),
+               y=TRUE)
+
+summary(logit_mod)
+
+
+```
+## 6. Make predictions from the logit model. Make sure these are probabilities. 
+```{R}
+#With these results in hand we can generate predicted probabilities and see if this model did any better. To get predicted probabilities, we need to specify `type=response` in our prediction call. 
+
+training<-training%>%
+  mutate(pred_logit=predict(logit_mod,type="response"))
+```
+
+```{r}
+#We can convert the predictions to a binary variable by setting a "threshold" of .5. Any prediction above .5 is considered to be a 1, anything below, a 0.
+
+training<-training%>%
+    mutate(pred_logit_out=ifelse(pred_logit>=.3,1,0))
+```
+#for the logit model, I predicted zero and the result was 0 in 63,563 cases.
+# For the lm model, I predicted 0 and the result was 0 in 64,007 vases.
+# 87% model accuracy.
+
+## 7. Create a confusion matrix from your linear model and your logit model.
+```{r}
+confusionMatrix(data=as.factor(training$pred_logit_out),reference=as.factor(training$IsBadBuy))
+
+confusionMatrix(data=as.factor(training$pred_lm_out),reference=as.factor(training$IsBadBuy))
+```
+# 87% model accuracy
+
+## 8. Plot the probability of a car being a bad buy by make.
+```{r}
+hypo_data<-data_grid(training, VehYear=seq_range(VehYear,n=100), VehicleAge=seq_range(VehicleAge,n=100))%>%  
+                     
+  mutate(pred=predict(logit_mod,newdata=.,type="response"))
+```
+
+And now we're ready to plot. 
+
+```{r}
+gg<-ggplot(hypo_data,
+           aes(x=VehicleAge,y=pred))
+gg<-gg+geom_line()
+gg<-gg+xlab("Vehicle Age")+ylab("Predicted Probability Lemons")
+gg
+```
+
+# The graph shows that as vehicle age increases, the predicted probability of being a lemon increases.
+
+## 9. Create a table that shows the probability of a car being a bad buy by make.
+```{r}
+
+lemon_make <-with(training,table(Make,IsBadBuy))
+
+colnames(lemon_make)<-c("Not a Lemon","Lemon")
+kable(lemon_make)
+lemon_make_prop<-prop.table(lemon_make,margin=1)
+kable(lemon_make_prop)
+
+```
+
+##Bonus: Create a heatmap of the probability of a car being a bad buy by make and acquisition type.
+
+```{r}
+
+
+
+```
+
