@@ -1,0 +1,133 @@
+---
+title: "10_assignment_crutchfield"
+author: "Russell Crutchfield"
+date: "10/31/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Install Libraries:
+
+library(tidyverse)
+library(modelr)
+library(caret)
+```
+
+```{r}
+library(forcats)
+
+```
+
+## Assignment 10
+
+# Based on your previous assignments concerning predictors and classifiers, do the following:
+
+# 1. Create a 10-fold cross validation of your predictor (linear regression) OR classifier (logistic regression, decision tree, or other). Provide a summary table or graphic of the RMSEs OR Accuracies from the cross validation.
+```{r}
+# Load Data - using ELS data since #2 says "predict reading score..."
+load("~/Desktop/Fall 2019/Data Science/scripts/els.Rdata")
+
+```
+
+```{r}
+# Using bynels2r, byrace covariables
+els<-els%>%
+  select(bynels2r,byrace)%>%
+  mutate_all(funs(as.numeric))%>%
+  tbl_df()
+
+
+```
+
+
+```{r}
+#Plot
+gg<-ggplot(els, aes(x=byrace,y=bynels2r))
+gg<-gg+geom_point()
+gg
+
+```
+
+```{r}
+ ## Define the model
+mod1_formula<-formula(bynels2r~byrace)
+## Run the model against all of the data
+basic.mod<-lm(mod1_formula,
+              data=els); summary(basic.mod)
+
+
+```
+# Coefficients are significant
+```{r}
+# Cross validation tes
+els_cf<-els%>%
+  crossv_kfold(10)
+els_cf
+
+
+```
+```{r}
+#Calculate the root mean squared error
+rmse_mod1<-els_cf %>% 
+  mutate(train = map(train, as_tibble)) %>% ## Convert to tibbles
+  mutate(model = map(train, ~ lm(mod1_formula,
+                                 data = .))) %>%
+  mutate(rmse = map2_dbl(model, test, rmse)) %>% ## apply model, get rmse
+  select(.id, rmse) ## pull just id and rmse 
+
+summary(rmse_mod1)
+```
+
+```{r}
+summary(rmse_mod1$rmse)
+
+#plot
+gg<-ggplot(rmse_mod1,aes(rmse))
+gg<-gg+geom_density()
+gg
+
+
+```
+
+
+
+## 2. Using a random partition, create 100 separate cross validations of your linear model predicting reading scores as a function of at least two covari- ates. Provide a summary table or graphic of the RMSEs from this cross validation.
+```{r}
+
+els_cv<-els%>%
+crossv_mc(n=100,test=.2) 
+els_cv
+
+```
+
+```{r}
+mod1_rmse_cv<-els_cv %>% 
+  mutate(train = map(train, as_tibble)) %>% ## Convert to tibbles
+  mutate(model = map(train, ~ lm(mod1_formula, data = .)))%>%
+  mutate(rmse = map2_dbl(model, test, rmse))%>% 
+  select(.id, rmse) ## pull just id and rmse 
+
+mod1_rmse_cv
+
+```
+
+```{r}
+summary(mod1_rmse_cv$rmse)
+```
+
+
+```{r}
+
+# Plot
+gg<-ggplot(mod1_rmse_cv,aes(rmse)) 
+gg<-gg+geom_density(bins=50,fill="red",alpha=.2)
+
+gg
+```
+
+
+
